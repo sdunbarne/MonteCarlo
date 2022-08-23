@@ -1,0 +1,1219 @@
+%%% -*-LaTeX-*-
+%%% montecarlo.tex.orig
+%%% Prettyprinted by texpretty lex version 0.02 [21-May-2001]
+%%% on Mon Aug 22 08:54:48 2022
+%%% for Steve Dunbar (sdunbar@family-desktop)
+
+\documentclass[12pt]{article}
+
+\input{../../../../etc/macros} %% \input{../../../../etc/mzlatex_macros}
+\input{../../../../etc/pdf_macros}
+
+\bibliographystyle{plain}
+
+\begin{document}
+
+\myheader \mytitle
+
+\hr
+
+\sectiontitle{Markov Chain Monte Carlo}
+
+\hr
+
+\usefirefox
+
+\hr
+
+% \visual{Study Tip}{../../../../CommonInformation/Lessons/studytip.png}
+% \section*{Study Tip}
+
+% \hr
+
+\visual{Rating}{../../../../CommonInformation/Lessons/rating.png}
+\section*{Rating} %one of
+% Everyone: contains no mathematics.
+% Student: contains scenes of mild algebra or calculus that may require guidance.
+% Mathematically Mature: may contain mathematics beyond calculus with proofs.
+Mathematicians Only:  prolonged scenes of intense rigor.
+
+\hr
+
+\visual{Section Starter Question}{../../../../CommonInformation/Lessons/question_mark.png}
+\section*{Section Starter Question}
+
+In statistical mechanics from physics, what is the Boltzmann
+distribution and what does it represent?
+
+\hr
+
+\visual{Key Concepts}{../../../../CommonInformation/Lessons/keyconcepts.png}
+\section*{Key Concepts}
+
+\begin{enumerate}
+    \item
+        With Markov chain Monte Carlo, to get a sample, select \( s_1
+        \in \mathcal{X} \) arbitrarily.  If \( s_{k-1} = i \), select \(
+        s_k = j \) with probability \( p_{ij} \).  By the Fundamental
+        Theorem for Markov Chains and the Strong Law of Large Numbers
+        for any \( k > 1 \), the resulting sequence \( s_1, s_2, \dots \)
+        has, as \( M \to \infty \),
+        \[
+            \frac{\card{\setof{k}{k \le M, s_k = j}}}{M} \to \pi_j
+        \] with probability \( 1 \).
+    \item
+        The heart of the MCMC method is the inverse problem:  Given a
+        distribution \( \pi \) on a finite state space, find an
+        irreducible, aperiodic Markov chain that is stationary on \( \pi
+        \).  The solution to this inverse problem is the \defn{Metropolis
+        algorithm}.
+    \item
+        The formal statement of the Metropolis algorithm for a suitable
+        proposed transition is:  For an arbitrary \( x \in \mathcal{X} \)
+        define the transition to a configuration \( x^{\star} \).
+        \begin{enumerate}
+            \item
+                Select \( x' \) according to the proposed transition.
+            \item
+                If \( E(x') \le E(x) \) or equivalently \(
+                \operatorname{Boltz}
+                (x') \ge
+                \operatorname{Boltz}
+                (x) \), let \( x^{\star} = x' \).  In other words,
+                always move to a lower energy (higher probability)
+                configuration.
+            \item
+                If \( E(x') > E(x) \) or equivalently \(
+                \operatorname{Boltz}
+                (x') <
+                \operatorname{Boltz}
+                (x') \), let \( x^{\star} = x' \) with probability
+                \[
+                    \frac{%
+                    \operatorname{Boltz}
+                    (x')}{%
+                    \operatorname{Boltz}
+                    (x)} = \EulerE^{-\Delta E/kT}.
+                \]
+            \item
+                Otherwise, \( x^{\star} = x' \).
+        \end{enumerate}
+    \item
+        %% Need notation fix in this item
+        For the Metropolis-Hastings algorithm, given a distribution \(
+        \pi \) to sample, select any transition probability matrix \( P
+        = (p_{ij}) \) on the state space.  Unlike the Metropolis
+        algorithm, \( P \) does not need to be symmetric.  Define the
+        transition probability matrix \( Q= (q_{ij}) \) by
+        \[
+            Q_{ij} =
+            \begin{cases}
+                p_{ij} \alpha_{ij} \text{ if \( i \ne j \) } \\
+                1 - \sum\limits_ {k \ne i} q_{ik} \text{ if \( i = j \)
+                }
+            \end{cases}
+        \] where \( \alpha_{ij} \) is given by
+        \[
+            \alpha_{ij} = \frac{s_{ij}}{1 + \frac{\pi_i}{\pi_j} \frac{p_
+            {ij}}{p_{ji}}}.
+        \] The values \( s_{ij} \) can be quite general so long as \( s_
+        {ij} = s_{ji} \) for all \( i \) and \( j \) and \( 0 \le \alpha_
+        {ij} \le 1 \).
+\end{enumerate}
+
+\hr
+
+\visual{Vocabulary}{../../../../CommonInformation/Lessons/vocabulary.png}
+\section*{Vocabulary}
+\begin{enumerate}
+    \item
+        The \defn{Markov chain Monte Carlo} (MCMC) method depends on the
+        observation that if \( \pi \) is the stationary distribution for
+        an irreducible, aperiodic Markov chain, then we can use the
+        Markov chain to sample from \( \pi \).
+    \item
+        The heart of the MCMC method is the inverse problem:  Given a
+        distribution \( \pi \) on a finite state space, find an
+        irreducible, aperiodic Markov chain that is stationary on \( \pi
+        \).  Two solutions to this inverse problem are the \defn{Metropolis
+        algorithm} and the \defn{Metropolis-Hastings algorithm}.
+    \item
+        In a 1970 paper, the statistician W. K. Hastings cast the
+        Metropolis algorithm as a general purpose sampling algorithm,
+        distilling the Metropolis algorithm to mathematical essentials.
+        Hastings's generalization of the Metropolis algorithm is the
+        \defn{Metropolis-Hastings algorithm}.
+    \item
+        Suppose the Markov chain is \defn{reversible}, so \( \pi(x) P(x,y)
+        = \pi(y) P(y,x) \).  In words, reversibility means that at
+        equilibrium the probability of going from state \( x \) to state
+        \( y \) is the same as going from \( y \) to \( x \).
+\end{enumerate}
+
+\hr
+
+\section*{Notation}
+\begin{enumerate}
+    \item
+        \( \pi \) -- the stationary distribution for an irreducible,
+        aperiodic Markov chain
+    \item
+        \( \mathcal{X} \) -- state space for Markov chain
+    \item
+        \( s_1 \) -- arbitrary element of the state space
+    \item
+        \( n > 1 \) -- arbitrary step in Markov chain sample
+    \item
+        \( s_{n-1}, s_n \) -- successive steps in Markov chain sample
+    \item
+        \( p_{ij} \) -- transition probability from state \( i \) to
+        state \( j \)
+    \item
+        \( M, m \) -- large sample sizes in Markov chain sample
+    \item
+        \( f \) -- arbitrary function on the state space
+    \item
+        \( E(\cdot) \) -- energy function
+    \item
+        \( T \) -- temperature
+    \item
+        \( \tilde{\mathcal{X}} \) be any sample of configurations
+        selected \emph{with replacement} from \( \mathcal{X} \)
+    \item
+        \( \card{\tilde{\mathcal{X}}} = \tilde{N} \)
+    \item
+        \( N_{x} \) -- the number of occurrences of \( x \) in \( \tilde
+        {\mathcal{X}} \)
+    \item
+        \( z = \sum\limits_{x' \in \mathcal{X}} \EulerE^{-E(x')/kT} \)
+        -- the partition function.
+    \item
+        \( k \) -- Boltzman constant
+    \item
+        \(
+        \operatorname{Boltz}
+        (x') \) -- Boltzman probability density
+    \item
+        \( P(x,x') \) -- transition probability matrix on \( \mathcal{X}
+        \)
+    \item
+        \( P = (p_{ij}) \) -- transition probability matrix on the state
+        space
+    \item
+        \( Q \) -- alternative transition probability matrix from
+        Metropolis or Metropolis Hastings algorithm
+    \item
+        \( L^2(\pi) \) -- the set of mappings \( \{\vec{g} :  \mathcal{X}
+        \to \Reals \} \) with inner product \( \langle \vec{g},\vec{h}
+        \rangle = \sum_{x}g(x) h(x) \pi(x) \)
+    \item
+        \( \beta_i \) -- real eigenvalues
+    \item
+        \( \vec{\psi}_i \) -- eigenvectors
+    \item
+        \( (x_{i1}, x_{i2}) \) for \( i = 1,2,3 \) -- positions for
+        three particles each randomly located in the square \( [0,1]^2
+        \subset \Reals^2 \)
+    \item
+        \( C \) and \( D \) -- fixed positive constants
+
+\end{enumerate}
+
+\visual{Mathematical Ideas}{../../../../CommonInformation/Lessons/mathematicalideas.png}
+\section*{Mathematical Ideas}
+
+%% \subsection*{Basic Ideas of MCMC}
+
+The \defn{Markov chain Monte Carlo} (MCMC)%
+\index{Markov chain Monte
+  Carlo}
+method depends on the observation:
+\begin{quotation}
+    If \( \pi \) is the stationary distribution for an irreducible,
+    aperiodic Markov chain, then we can use the Markov chain to sample
+    from \( \pi \).
+\end{quotation}
+To get a sample, select \( s_1 \in \mathcal{X} \) arbitrarily.  For any \(
+n > 1 \), if \( s_{n-1} = i \), select \( s_n = j \) with probability \(
+p_{ij} \).  By the Fundamental Theorem for Markov Chains and the Strong
+Law of Large Numbers the resulting sequence \( s_1, s_2, \dots \) has,
+as \( M \to \infty \),
+\[
+    \frac{\card{\setof{n}{n \le M, s_n = j}}}{M} \to \pi_j
+\] with probability \( 1 \).
+
+Any large but finite part of the sequence approximates a sample from \(
+\pi \).  Often, one discards the first \( m \) terms of the sequence and
+uses the ``tail'' of the sequence, \( s_{m+1}, s_{m+2}, \dots, s_M \) as
+the sample.
+
+Samples from \( \pi \), however obtained, provide a way to approximate
+properties of \( \pi \).  Suppose \( f \) is a real-valued function on
+the state space \( \mathcal{X} \).  To approximate the expected value
+\[
+    \E{f} = \sum\limits_{\nu=1}^N f(x_\nu) \pi_\nu
+\] select a sample \( s_1, s_2, \dots s_M \) from \( \pi \) and the
+ergodic theorem guarantees
+\[
+    \frac{1}{M} \sum\limits_{\nu=1}^M f(s_\nu) \to \E{f}
+\] as \( M \to \infty \) with convergence rate \( O(M^{-1/2}) \).
+
+Given a reasonably sized transition probability matrix for an
+irreducible, aperiodic Markov chain, it is a standard to find its
+stationary distribution.  The heart of the MCMC method is the inverse
+problem:
+\begin{quotation}
+    Given a distribution \( \pi \) on a finite state space, find an
+    irreducible, aperiodic Markov chain stationary on \( \pi \).
+\end{quotation}
+Two solutions to this inverse problem are the Metropolis algorithm and
+the Metropolis-Hastings algorithm.%
+\index{Metropolis algorithm}
+\index{Metropolis-Hastings algorithm}
+The Metropolis algorithm was motivated by the desire to understand
+properties of the \emph{Boltzmann distribution} from statistical
+mechanics, the branch of physics concerned with the average behavior of
+large systems of interacting particles.
+
+\subsection*{A Motivational Example from Statistical Mechanics}
+
+Consider a very large but conceptually finite state space \( \mathcal{X}
+\), also called a configuration space \( \mathcal{X} \),%
+\index{configuration space}
+an energy function \( E(\cdot) \) on \( \mathcal{X} \) and a fixed
+temperature \( T \).  Let \( \tilde{\mathcal{X}} \) be any sample of
+configurations selected \emph{with replacement} from \( \mathcal{X} \).
+It is desirable to let \( \tilde{\mathcal {X}} \) be larger than \(
+\mathcal{X} \).  The goal is to change \( \tilde{\mathcal{X}} \) so that
+it becomes approximately a sample from the Boltzmann distribution.%
+\index{Boltzmann distribution}
+Suppose \( \card{\tilde{\mathcal{X}}} = \tilde{N} \) and let \( N_{x} \)
+denote the number of occurrences of \( x \) in \( \tilde{\mathcal{X}} \).
+To say the sample approximates the Boltzmann distribution means
+\[
+    \frac{N_{x}}{N} = \frac{\EulerE^{-E(x)/kT}}{z}
+\] for the proportionality or normalizing constant \( z \).  The
+denominator
+\[
+    z = \sum\limits_{x' \in \mathcal{X}} \EulerE^{-E(x')/kT}
+\] is called the partition function.%
+\index{partition function}
+In any realistic setting, the partition function is intractable, usually
+due to the size of \( \mathcal{X} \).  However, for any two
+configurations \( x \) and \( x' \)
+\begin{equation}
+    \label{eq:montecarlo:boltzmandiff} \frac{N_{x'}}{N_{x}} = \frac{\EulerE^
+    {-E(x')/kT}}{\EulerE^{-E(x)/kT}} = \EulerE^{-(E(x')-E(x))/kT} =
+    \EulerE^{-\Delta E/kT}.
+\end{equation}
+This ratio does not depend on the partition function.
+
+Now start from any irreducible, aperiodic Markov chain on \( \mathcal{X}
+\).  Let the transition probability from configuration \( x \) to \( x' \)
+be \( P_{x, x'} \).  Also, let the transition probability matrix be
+symmetric, \( P_{x, x'} = P_{x', x} \) so the proposed Markov chain is
+reversible.  Allow transitions from configurations with high energy \( E
+(x') \) to lower energy \( E(x) \) when they are proposed.  Any downhill
+transition is allowed, the choice is based on convenience and
+naturalness.  The number of times this occurs is \( P_{x', x} N_{x'} \).
+
+To reach equilibrium with a complete distribution of energies, not just
+the low energies achieved by flowing downhill, occasionally allow uphill
+transitions from configurations with low energy \( E(x) \) to high
+energy \( E(x') \) with some probability \( \Prob{x \to x'} \).  The
+number of times the uphill transition occurs is \( P_{x, x'} N_{x}\Prob{x
+\to x'} \).  Since the Markov chain is reversible, the transition
+probability is symmetric and \( P_{x', x} = P_{x, x'} \).  The net flux
+from configurations with high energy \( E(x') \) to low energy \( E(x) \)
+is
+\begin{equation}
+    \label{eq:montecarlo:netflux} P_{x', x} N_{x'} - P_{x,x'}N_x \Prob{x
+    \to x'} = P_{x, x'} \left( N_{x'} - N_{x} \Prob{x \to x'}\right).
+\end{equation}
+
+In equilibrium, so that the distribution of energies in \( \tilde{\mathcal
+{X}} \) reflects the Boltzmann distribution very well, the net energy
+flux should be zero.  Using equation~\eqref{eq:montecarlo:boltzmandiff}
+implies that the uphill probability must be
+\[
+    \Prob{x \to x'} = \frac{N_{x'}}{N_{x}} = \EulerE^{-\Delta E/kT}.
+\]
+
+This modified Markov chain process will drive an arbitrary distribution
+of energies toward the Boltzmann distribution for the following reasons.
+Suppose the distribution has too many configurations with high energy \(
+E(x') \) compared with configurations with the low energy \( E(x) \),
+that is,
+\[
+    \frac{N_{x'}}{N_{x}} > \EulerE^{-\Delta E/kT}.
+\] In this case, the net flux in equation~%
+\ref{eq:montecarlo:netflux} is positive and there will be more
+transitions from configurations with high energy to those with low
+energy than in the other direction.  The distribution of energies in \(
+\tilde{\mathcal {X}} \) will move properly towards the Boltzmann
+distribution.  Repeating the process will produce a set of
+configurations whose distribution of energies approximates the Boltzmann
+distribution.  Understanding the rate of convergence is left for further
+investigation.
+
+The following is a formal statement of the Metropolis algorithm for a
+suitable proposed transition.  For an arbitrary \( x \in \mathcal{X} \)
+define the transition to a configuration \( x^{\star} \).
+\begin{enumerate}
+    \item
+        Select \( y \) according to the proposed transition.
+    \item
+        If \( E(y) \le E(x) \) or equivalently \(
+        \operatorname{Boltz}
+        (y) \ge
+        \operatorname{Boltz}
+        (y) \), let \( x^{\star} = y \).  In other words, always move to
+        a lower or equal energy (equivalently, a greater or equal
+        probability) configuration.
+    \item
+        If \( E(y) > E(x) \) or equivalently \(
+        \operatorname{Boltz}
+        (y) <
+        \operatorname{Boltz}
+        (x') \), let \( x^{\star} = y \) with probability
+        \[
+            \frac{%
+            \operatorname{Boltz}
+            (y)}{%
+            \operatorname{Boltz}
+            (x)} = \EulerE^{-\Delta E/kT}.
+        \] In other words, move to a higher energy (lesser probability)
+        configuration with probability \( \EulerE^{-\Delta E/kT} \).
+    \item
+        Otherwise, \( x^{\star} = y \).
+\end{enumerate}
+This process defines an irreducible, aperiodic Markov chain on the
+configuration space \( \mathcal{X} \).  The ratio is crucial to the
+computational utility of the Metropolis algorithm because it avoids the
+intractable partition function.  The steps of the chain are easily
+computable, or at least as easy as the proposal transition.  In many
+settings, \( \Delta E = E(x') - E(x) \) is simple to compute, often it
+is independent of \( \card{\mathcal{X}} \).  The Markov chain defined by
+the Metropolis algorithm can be implemented without knowing the entire
+transition matrix.
+
+\subsection*{Abstraction of the Metropolis Algorithm}
+
+The Metropolis algorithm%
+\index{Metropolis algorithm}
+creates an easily computed Markov chain that is stationary on the
+desired distribution \( \pi \).  The algorithm requires only the
+relative weights of the limiting distribution, not the probabilities,
+thereby avoiding the possibly intractable normalizing constant \( z \).
+
+Let \( \mathcal{X} \) be a potentially large but finite state space and \(
+\pi(x) \) a probability mass vector on \( \mathcal{X} \), perhaps
+specified only up to an unknown normalizing constant.  Let \( P \) be a
+transition probability matrix on \( \mathcal{X} \) with \( P(x,x') > 0 \)
+if and only if \( P(x',x) > 0 \).  This is a weaker requirement than
+reversibility.  Using parentheses instead of integer subscripts to index
+entries is a slight change of notation for matrices.  Increasing the
+analogy to the previous example from statistical mechanics, along with a
+connection to spectral theory used later motivates the change in
+notation.  At the start \( P \) is unrelated to \( \pi \).  The \defn{Metropolis
+algorithm} changes \( P \) to a new transition probability matrix \( Q(x,x')
+\) with stationary distribution \( \pi \).  Define the \emph{acceptance
+ratio} as
+\[
+    A(x,x') = \frac{\pi(x') P(x',x)}{\pi(x) P(x,x')}.
+\] The potential lack of a normalizing constant for the distribution \(
+\pi \) does not matter since it cancels in the acceptance ratio.  The
+Metropolis algorithm changes \( P \) by
+\[
+    Q(x,x') =
+    \begin{cases}
+        P(x,x') & x \ne x', A(x,x') \ge 1 \\
+        P(x,x')A(x,x') & x \ne x', A(x,x') < 1\ \\
+        P(x,x') + \sum\limits_{z:A(x,z) < 1} P(x,z)(1 - A(x,z)) & x =
+        x'.
+    \end{cases}
+\]
+
+The Metropolis algorithm has a simple interpretation:  from \( x \),
+choose \( x' \) with probability \( P(x,x') \) as in the original Markov
+chain.  Then if the acceptance ratio \( A(x,x') \ge 1 \), move to \( x' \);
+if the acceptance ratio \( A(x,x') < 1 \), flip a coin with success
+probability \( A(x,x') \) and move to \( x' \) if success occurs; in
+other cases stay at \( x \).
+
+The new chain satisfies
+\[
+    \pi(x) Q(x,x') = \pi(x') Q(x',x)
+\] and thus
+\[
+    \sum\limits_{x \in \mathcal{X}} \pi(x) Q(x,x') = \sum\limits_{x \in
+    \mathcal{X}} \pi(x') Q(x',x) = \pi(x') \sum\limits_{x \in \mathcal{X}}
+    Q(x',x) = \pi(x').
+\] Therefore, \( \pi \) is a left eigenvector with eigenvalue \( 1 \).
+If the Markov chain is connected, then the Fundamental Theorem of Markov
+Chains is in effect.  After many steps of the chain, it should have
+converged to a stationary distribution.  That is, the chance of being at
+\( x \) is approximately \( \pi(x) \), no matter what the starting
+state.
+
+\subsection*{Metropolis-Hastings Algorithm}
+
+In a 1970 paper, the statistician W. K. Hastings cast the Metropolis
+algorithm as a general purpose sampling algorithm, distilling the
+Metropolis algorithm to mathematical essentials.  The following is
+Hastings's generalization of the Metropolis algorithm, known as the
+\defn{Metropolis-Hastings algorithm}.%
+\index{Metropolis-Hastings algorithm}
+Given a distribution \( \pi \) to sample, select any transition
+probability matrix \( P = (p_{ij}) \) on the state space.  Here the
+notation for matrix entries reverts again to subscripts since the
+application is typically for matrices on finite dimensional spaces.
+Unlike the Metropolis algorithm, \( P \) does not need to be symmetric.
+Define the transition probability matrix \( Q= (q_{ij}) \) by
+\[
+    Q_{ij} =
+    \begin{cases}
+        p_{ij} \alpha_{ij} \text{ if \( i \ne j \) } \\
+        1 - \sum\limits_{\nu \ne i} p_{i\nu} \alpha_{i \nu} \text{ if \(
+        i = j \) }
+    \end{cases}
+\] where \( \alpha_{ij} \) is given by
+\[
+    \alpha_{ij} = \frac{s_{ij}}{1 + \frac{\pi_i}{\pi_j} \frac{p_{ij}}{p_
+    {ji}}}.
+\] The values \( s_{ij} \) can be quite general so long as \( s_{ij} = s_
+{ji} \) for all \( i \) and \( j \) and \( 0 \le \alpha_{ij} \le 1 \).
+With this choice of \( s_{ij} \) it is easy to verify that \( \pi \) is
+the unique stationary distribution for \( P \).  For a symmetric \( Q \),
+a simple choice of \( s_{ij} \) recovers the original Metropolis
+algorithm.
+
+For a given distribution \( \pi \), different choices of \( s_{ij} \)
+give different Metropolis algorithms, all of which result in a Markov
+chain with stationary distribution on \( \pi \).  P.\ H.\ Peskun showed
+that among all choices of the \( s_{ij} \), the variance of the estimate
+\[
+    \frac{1}{M} \sum\limits_{\nu=1}^M f(s_\nu) \to \E{f}
+\] is asymptotically minimal for the choice that leads to the Metropolis
+algorithm.
+
+\subsection*{Convergence} A basic problem of Markov chain theory but
+especially for Markov chain Monte Carlo theory is:  What is the rate of
+convergence in \( P^n(x,y) \to \pi(x) \)?  How long must the chain run
+to be suitably close to \( \pi \)?  It is customary to measure distance
+between probabilities by the total variation distance
+\[
+    \|P^n_x - \pi\|_{TV} = \frac{1}{2} \sum\limits_y \abs{ P^n_x - \pi }
+    = \max_{A\subset X} \abs{ P^n(x,A) - \pi(A) }.
+\] Probability distributions \( P^n_{x} \) and \( \pi \) are far apart
+in total variation distance if there is a ``bad event'' \( A \) such
+that \( P^n_{x} \) and \( \pi \) measure \( A \) differently.  The goal
+is to show that for large \( n \) the Markov chain and the stationary
+distribution do not share a ``bad event''.  This yields the problem:
+Given \( P \), \( \pi \), \( x \), \( \epsilon > 0 \), how large must \(
+n \) so that \( \| P^n_x - \pi \|_{TV} < \epsilon \)?  This question has
+an answer for only a few problems, see for example the section on Card
+Shuffling.
+
+Suppose the Markov chain is \defn{reversible}, so \( \pi(x) P(x,y) = \pi
+(y) P(y,x) \).%
+\index{reversible Markov chain}
+In words, reversibility means that at equilibrium the probability of
+going from state \( x \) to state \( y \) is the same as going from \( y
+\) to \( x \).  Here again the notation uses parentheses for matrix and
+vector entries instead of subscripts.  The parenthesis notation
+emphasizes the following connection to \( L^2 \) theory.  Let the space
+be \( L^2(\pi) \), the set of mappings \( \{\vec{g} :  \mathcal{X} \to
+\Reals \} \) with inner product \( \langle \vec{g},\vec{h} \rangle =
+\sum_{x}g(x) h(x) \pi(x) \).  Take \( P \) to operate on \( L^2 \) by
+usual matrix multiplication \( P\vec{g}(x) = \sum_y P(x,y) g(y) \).  The
+property of reversibility implies \( \langle P\vec{g},\vec{h} \rangle =
+\langle \vec{g},P \vec{h} \rangle \), so \( P \) is self-adjoint, see
+the exercises.  The Spectral Theorem says the space has an orthonormal
+basis (with respect to the inner product) of right (or column)
+eigenvectors \( \vec{\psi}_i \) and real eigenvalues \( \beta_i \), so \(
+P\vec{\psi}_i = \beta_i \vec{\psi}_i \) for \( 1 \le i \le \card{\mathcal
+{X}} \) ordered by \( 1 = \beta_1 \ge \beta_2 \ge \cdots \ge \beta_{\card
+{\mathcal{X}}} \ge -1 \).  Here subscripts are indexing the sets of
+eigenvectors and eigenvalues, not entries of vectors or matrices.  Each
+row of \( P \) sums to \( 1 \), so \( \vec{1} = (1,1, \dots, 1)^T \) is
+a right eigenvector corresponding to eigenvalue \( 1 \).  Additionally,
+with respect to the weighted inner product \( \| \vec{1} \|^{2} =
+\langle \vec{1}, \vec{1} \rangle = \sum_{x} 1 \cdot 1 \cdot \pi(x) = 1 \),
+so without loss of generality use \( \beta_1 = 1 \) and \( \psi_1 = \vec
+{1} \) in the convergence estimate below.
+
+By standard inner product space manipulations (see the exercises)
+\begin{align*}
+    P(x,y) &= \pi(y) \sum\limits_{\nu=1}^{\card{\mathcal{X}}} \beta_\nu
+    \psi_\nu (x) \psi_\nu(y) \\
+    P^n(x,y) &= \pi(y) \sum\limits_{\nu=1}^{\card{\mathcal{X}}} \beta_\nu^n
+    \psi_\nu(x) \psi_\nu(y) \\
+\end{align*}
+Using the total variation metric definition and the Cauchy-Schwartz
+inequality
+\begin{align*}
+    2\|P^n_x - \pi\|_{TV} &= \sum\limits_y \abs{P^n(x,y) - \pi(y) } \\
+    &= \sum\limits_y \abs{P^n(x,y) - \pi(y) } \frac{\sqrt{\pi(y)}}{\sqrt
+    {\pi(y)}}\\
+    &\le \sqrt{\sum_y \frac{\abs{P^n(x,y) - \pi(y) }^2}{\left( \sqrt{\pi
+    (y)} \right)^2}} \cdot \sqrt{\sum_y \left( \sqrt{\pi(y)} \right)^2}
+    \\
+    &= \sqrt{\sum_y \frac{\abs{P^n(x,y) - \pi(y)}^2}{\pi(y)} }.
+\end{align*}
+
+Then
+\begin{align*}
+    4 \|P^n_x - \pi \|^2_{\text{TV}} &\le \sum\limits_y \frac{\left(P^n(x,y)
+    - \pi(y)\right)^2}{\pi(y)} \\
+    &= \sum\limits_y \frac{\left(\pi(y) \sum\limits_{\nu=1}^{\card{\mathcal
+    {X}}} \beta_\nu^n \psi_\nu(x) \psi_\nu(y) - \pi(y)\right)^2}{\pi(y)}
+    \\
+    &= \sum\limits_y \pi(y) \left(\sum\limits_{\nu=1}^{\card{\mathcal{X}}}
+    \beta_\nu^n \psi_\nu(x) \psi_\nu(y) - 1 \right)^2.
+\end{align*}
+Expand the squared term, distribute the \( \pi(y) \) terms and
+interchange the order of summation, factoring out terms not depending on
+\( y \).
+\begin{multline*}
+    = \sum\limits_y \pi(y) \sum\limits_{\nu=1}^{\card{\mathcal{X}}}
+    \beta_{\nu}^{2n} \psi_{\nu}(x)^2 \psi_{\nu}(y)^2 + 2 \sum_{\nu=1}^{\card
+    {\mathcal{X}}} \sum_{\mu=\nu+1}^{\card{\mathcal{X}}} \beta_{\nu}
+    \beta_{\mu} \psi_{\nu}(x)\psi_{\nu}(y) \psi_{\mu}(x) \psi_{\mu}(y)
+    \\
+    \qquad - 2 \sum_{\nu=1}^{\card{\mathcal{X}}} \beta_{\nu} \psi_{\nu}(x)\psi_
+    {\nu}(y) + 1 \\
+    = \sum\limits_y \sum\limits_{\nu=1}^{\card{\mathcal{X}}} \beta_{\nu}^
+    {2n} \psi_{\nu}(x)^2 \psi_{\nu}(y)^2 \pi(y) + 2 \sum_{\nu=1}^{\card{\mathcal
+    {X}}} \sum_{\mu=\nu+1}^{\card{\mathcal{X}}} \beta_{\nu} \beta_{\mu}
+    \psi_{\nu}(x)\psi_{\mu}(y) \psi_{\mu}(x) \psi_{\mu}(y) \pi(y) \\
+    \qquad - 2 \sum_{\nu=1}^{\card{\mathcal{X}}} \beta_{\nu} \psi_{\nu}(x)\psi_
+    {\nu}(y)\pi (y) + \pi(y) \\
+    = \sum\limits_{\nu=1}^{\card{\mathcal{X}}} \beta_{\nu}^{2n} \psi_{\nu}
+    (x)^2 \sum\limits_y \psi_{\nu}(y)^2 \pi(y) \\
+    + 2 \sum_{\nu=1}^{\card{\mathcal{X}}} \sum_{\mu=\nu+1}^{\card{\mathcal
+    {X}}} \beta_{\nu} \beta_{\mu} \psi_{\nu}(x) \psi_{\mu}(x) \sum\limits_y
+    \psi_{\nu}(y)\psi_{\mu}(y) \pi(y) \\
+    \qquad - 2 \sum_{i=1}^{\card{\mathcal{X}}} \beta_i \psi_i(x) \sum\limits_y
+    \psi_i(y)\pi(y) + \sum\limits_y \pi(y) \\
+\end{multline*}
+By orthonormality, \( \sum_y \psi_{\nu}(y)^2 \pi(y) = \langle \vec{\psi_
+{\nu}}, \vec{\psi_\nu} \rangle = 1 \) for \( \nu = 1, \dots, \card{\mathcal
+{X}} \). By orthogonality, \( \sum_y \psi_{\nu}(y) \psi_{\mu} \pi(y) =
+\langle \vec{\psi_{\nu}}, \vec{\psi_{\mu}} \rangle = 0 \) for \( \nu =
+1, \dots, \card{\mathcal{X}} \) and \( \mu = \nu+1, \dots, \card{\mathcal
+{X}} \).  Recalling \( \beta_1 = 1 \) and \( \psi_1 = \vec{1} \), by
+orthogonality \( \sum_y \psi_i(y) \pi(y) = \sum\limits_y 1 \cdot \psi_i(y)
+\pi(y) = \langle \vec{\psi_1}, \vec{\psi_i} \rangle = 0 \) for \( i = 2,
+\dots \card{\mathcal{X}} \) while \( \sum_y \psi_1(y) \pi(y) = 1 \).
+Also, \( \sum_y \pi(y) = 1 \).  This leaves
+\begin{align*}
+    & = \beta_1^{2n} \psi_1(x)^2 + \sum\limits_{i=2}^{\card{\mathcal{X}}}
+    \beta_i^{2n} \psi_i(x)^2 - 2 \beta_1^n \psi_1(x) + \sum\limits_y \pi
+    (y) \\
+    &= 1 + \sum\limits_{i=2}^{\card{\mathcal{X}}} \beta_i^{2n} \psi_i(x)^2
+    - 2 + 1 \\
+    &= \sum\limits_{i=2}^{\card{\mathcal{X}}} \beta_i^{2n} \psi_i(x)^2.
+\end{align*}
+Summarizing
+\begin{equation}
+    \|P^n_x - \pi \|^2_{\text{TV}} \le \frac{1}{4} \sum\limits_{i=2}^{\card
+    {\mathcal{X}}} \beta_i^{2n} \psi_i(x)^2.%
+    \label{eq:montecarlo:bound}
+\end{equation}
+
+This bound is the basic eigenvalue bound used to get rates of
+convergence for the Markov chain Monte Carlo method.  Recalling Theorem
+11 from Stationary Distributions, there exist constants \( \alpha \in (0,1)
+\) and \( C > 0 \) such that
+\[
+    \max_{x \in \mathcal{X}} \| (P^n)_{i \cdot} - \pi \|_{TV} \le C
+    \alpha^n.
+\] The results here give more information, but to get good bounds on the
+right hand side requires knowledge of both eigenvalues and eigenvectors.
+
+\subsection*{A Simple Example}
+
+Recall the magical land of Oz where the weather follows a pattern.  If
+it is raining today (R), then tomorrow has a \( 50\% \) chance of
+raining again, and a \( 25\% \) chance of either having a nice day (N)
+or a snowy day (S) tomorrow.  Similarly if it is snowing, we have a \(
+50\% \) chance of again having snow, and a \( 25\% \) chance of either
+having a nice day, or a rainy day.  Also the land of Oz never has two
+nice days in a row, and equally has rain or snow the day after a nice
+day.  Further recall that for \( P^n \), for large values of \( n \),
+the row vectors approach the stationary distribution \( \mathbf{\pi}=(2/5,1/5,2/5)
+\) in the order \( (R, N, S) \).
+
+Take this distribution as the desired distribution \( \pi \).  To
+illustrate the Markov chain Monte Carlo method, use the
+Metropolis-Hastings algorithm.  For simplicity and in the absence of any
+other reasonable transition probability matrix, take the initial
+transition probability matrix to be uniform on the state space of
+weather days, \( P = (p_{ij}) \equiv \frac{1}{3} \).  Then \( \alpha_{ij}
+\) is given by
+\[
+    \alpha_{ij} = \frac{s_{ij}}{1 + \frac{\pi_i}{\pi_j} \frac{p_{ij}}{p_
+    {ji}}}
+\] with \( s_{ij} \equiv 1 \) again for simplicity and the lack of any
+other reasonable choice.  With these choices,
+\[
+    \alpha =
+    \begin{pmatrix}
+        \frac{1}{2} & \frac{1}{3} & \frac{1}{2} \\
+        \frac{2}{3} & \frac{1}{2} & \frac{2}{3} \\
+        \frac{1}{2} & \frac{1}{3} & \frac{1}{2} \\
+    \end{pmatrix}
+    .
+\] Following the construction of the Metropolis-Hastings algorithm
+\[
+    Q =
+    \begin{pmatrix}
+        \frac{13}{18} & \frac{1}{9} & \frac{1}{6} \\
+        \frac{2}{9} & \frac{5}{9} & \frac{2}{9} \\
+        \frac{1}{6} & \frac{1}{9} & \frac{13}{18}
+    \end{pmatrix}
+    .
+\] Then \( \pi = (2/5, 1/5, 2/5) \) is a stationary distribution of \( Q
+\), just as it is for \( P \).  Comparing the rates of convergence is
+interesting too.  The eigenvalues of \( P \) are \( 1, 1/4, -1/4 \), so
+the rate of convergence of \( P^n \) is about like \( (1/4)^n \).  On
+the other hand, the eigenvalues of \( Q \) are \( 1, 5/9, 4/9 \), so the
+rate of convergence of \( Q^{n} \) is about like \( (5/9)^n \), much
+slower.  This is not surprising, since sampling the stationary
+distribution from the Markov chain is not as direct.
+
+The Markov chain with \( Q \) as transition probability matrix is
+reversible.  After \( 5 \) steps the square of the total variation
+distance of the distribution from state \( 1 \), Rain, from the
+stationary distribution is approximately \( 7.95 \times 10^{-4} \) while
+the bound from~\eqref{eq:montecarlo:bound} is \( 8.94 \times 10^ {-4} \).
+After \( 10 \) steps the square of the total variation distance of the
+distribution from state \( 1 \) from the stationary distribution is
+approximately \( 2.05 \times 10^{-6} \) while the bound from~\eqref{eq:montecarlo:bound}
+is \( 2.45 \times 10^{-6} \).  Regression analysis gives
+\[
+    \| (P^n)_{1, \cdot} - \pi \|_{TV} \approx 0.5295 \cdot (0.5538)^n,
+\] about what is expected.
+
+\subsection*{Example with Continuous State Space}
+
+Consider three particles each randomly located in the square \( [0,1]^2
+\subset \Reals^2 \) with positions \( (x_{i1}, x_{i2}) \) for \( i =
+1,2,3 \). The state space is \( \mathcal{X} = [0,1]^6 \).  Suppose the
+positions of the particles are distributed according to the density
+\[
+    \pi(x) = \pi(x_1,x_2,x_3) = \frac{1}{z} \exp\left[ -C \sum\limits_{i=1}^3
+    \|x_i\| - D \sum\limits_{i<j} \frac{1}{\| x_i - x_j \|} \right]
+\] where \( \| \cdot \| \) is the usual Euclidean norm on \( \Reals^2 \),
+\( C \) and \( D \) are fixed positive constants and \( z \) is the
+normalizing constant or partition function.  In this density the first
+sum pushes the particle towards the origin, the second sum pushes them
+away from each other.
+
+To create a Markov chain with \( \pi \) as its stationary distribution,
+use the Metropolis algorithm. Given \( X_n \), first choose \( y \in [0,1]^6
+\) from the uniform distribution on \( \mathcal{X} \).  Then with
+probability \( r = \min[1, \pi(y)/\pi(x)] \), accept \( X_{n+1} = y \),
+otherwise reject \( y \) and \( X_{n+1} = x \).  Then this Markov chain
+has \( \pi \) as its stationary distribution.  The later section on
+Convergence to the Stationary Distribution will show that with \( C = D
+= \frac{1}{10} \) the rate of convergence is
+\[
+    \|
+    \operatorname{dist}
+    (X_n) - \pi \|_{TV} \le (0.883)^n
+\] so that after \( 38 \) steps, the total variation distance between
+the Markov chain and the stationary distribution is less than \( 0.01 \).
+
+A plot of the stationary distribution is Figure~%
+\ref{fig:montecarlo:pointproc}.
+
+\begin{figure}
+    \centering
+
+    \caption{Plot of points \( x_1 \), \( x_2 \), \( x_3 \) from step \(
+    100 \) to step \( 3000 \) in the Metropolis algorithm simulation of
+    the stationary distribution \( \pi \) for the continuous state space
+    Markov chain.  }%
+    \label{fig:montecarlo:pointproc} \includegraphics{pointproc}
+
+\end{figure}
+
+\subsection*{Example with Unbounded Continuous State Space}
+
+Let the state space be \( \mathcal{X} = \Reals \) with target density
+the double exponential or Laplace distribution. \( \pi(x) = \EulerE^{-\abs
+{x}}/2 \).  It is easy to simulate the double exponential density using
+the standard technique of choosing a uniform random deviate and then
+applying the inverse of the cumulative distribution function, so this is
+an illustrative example rather than a practical simulation method for
+the double exponential distribution.
+
+Use another version of the Metropolis algorithm.  Choose the initial
+state \( x_0 \) uniformly at random from the interval \( [ -2, +2] \).
+At succeeding steps, first propose to move from state \( x \) to \( y \)
+chosen uniformly at random from the interval \( [x - 2, x + 2] \).  With
+probability \( \min[1, \pi(y)/\pi(x)] \), accept the proposal \( y \)
+which becomes the new state, otherwise reject it and remain at \( x \).
+Again, this procedure creates a Markov chain with \( \pi \) as its
+stationary distribution.
+
+The later section on Convergence to the Stationary Distribution will
+show that a theoretical upper bound on the rate of convergence is
+\[
+    \|
+    \operatorname{dist}
+    (X_n) - \pi \|_{TV} \le (0.983)^{1 + n/439.56} + (2 \cdot (20.04)^{n/439.56})
+    (0.993)^n
+\] so that after \( 120{,}000 \) steps, the total variation distance
+between the Markov chain and the stationary distribution is less than \(
+0.01 \).  The R script in the Algorithms section shows that after about \(
+48{,}000 \) steps total variation distance between this Markov chain and
+the stationary distribution is less than \( 0.05 \).  Either way, the
+convergence to a stationary distribution is much slower than other
+examples.
+
+% \subsection*{An Example from Symmetric Functions}
+
+% Let $\mathcal{X} = S_n$, the symmetric group on $n$ letters.  Define a
+% probability measure on $S_n$ by
+% \[
+%     \pi(\sigma) = z^{-1}\theta^{d(\sigma, \sigma_0)}
+% \]
+% for $\sigma, \sigma_0 \in S_n$ and $0 < \theta \le 1$.  The function
+% $d(\sigma, \sigma_0)$ is a metric on the symmetric group,
+% \[
+%     d(\sigma,\sigma_0) = \text{ minimum number of transpositions
+%       required to bring $\sigma$ to $\sigma_0$. }
+% \]
+% This metric is called \emph{Cayley's distance} because a result of
+% Cayley implies that $d(\sigma,\sigma_0) = n - c(\sigma^{-1}\sigma_0)$
+% with $c(\tau)$ being the number of cycles in $\tau$.
+% %% https://rdrr.io/rforge/Rankcluster/man/distCayley.html
+% %% https://www.findstat.org/StatisticsDatabase/St000216
+
+% The metric is
+% bi-invariant, $d(\sigma,\sigma_0) = d(\tau\sigma, \tau\sigma_0) =
+% d(\sigma\tau, \sigma_0\tau)$.  The normalizing constant $z$ is known
+% to be $z = \sum\limits_{\sigma \in S_n} \theta^{d(\sigma,\sigma_0)} =
+% \prod\limits_{i=1}^n (1 + \theta \cdot (i-1))$.
+% If $\theta=1$, $\pi(\sigma)$ is the uniform distribution on $S_n$.
+% For $\theta < 1$, $\pi(\sigma)$ is largest at $\sigma_0$ and falls off
+% from its maximum as $\sigma$ moves away from $\sigma_0$.  The problem
+% here is \emph{How can samples be drawn from $S_n$ with this
+%   probability distribution?}
+
+% The example answers this question with the Metropolis algorithm based
+% on random transposition.  From $\sigma \in S_n$, choose a
+% transposition $(i,j)$ uniformly at random and consider $(i,j)\sigma =
+% \sigma^{\star}$.
+
+\visual{Section Starter Question}{../../../../CommonInformation/Lessons/question_mark.png}
+\section*{Section Ending Answer}
+
+In statistical mechanics and mathematics, a Boltzmann distribution is a
+probability distribution or probability measure that gives the
+probability that a system will be in a certain state or
+``configuration'' as a function of that state's energy and the
+temperature of the system.  The distribution is expressed in the form:
+\[
+    p_{i}\propto \EulerE^{-{\frac {\varepsilon _{i}}{kT}}}
+\] where \( p_i \) is the probability of the system being in state \( i \),
+\( \varepsilon_i \) is the energy of that state, and a constant \( kT \)
+of the distribution is the product of Boltzmann's constant \( k \) and
+thermodynamic temperature \( T \).  The distribution shows that states
+with lower energy will always have a higher probability of being
+occupied.
+
+\subsection*{Sources} This section is adapted from:  ``The Evolution of
+Markov Chain Monte Carlo Methods'' by Matthew Richey
+\cite{richey10} and ``The Markov chain Monte Carlo revolution'' by Persi
+Diaconis
+\cite{diaconis09}.  The examples of the continuous state space and the
+unbounded state space is adapted from
+\cite{jiang21}.
+
+\hr
+
+\visual{Algorithms, Scripts, Simulations}{../../../../CommonInformation/Lessons/computer.png}
+\section*{Algorithms, Scripts, Simulations}
+
+\subsection*{Algorithm}
+
+\begin{algorithm}[H]
+  \DontPrintSemicolon
+  \KwData{Desired stationary distribution}
+  \KwResult{Approximate stationary distribution}
+  \BlankLine
+  \emph{Initialization of Matrices}\;
+     Load Markov chain library\;
+     Set number of states\;
+     Set simple uniform transition probability matrix\;
+     Set state names\;
+     Set desired stationary distribution\;
+     Set up matrix with \( s \) values\;
+     Set matrix with \( \alpha \) values according to algorithm\;
+     Set new probability transition matrix\;
+     Set markovchain object\;
+     Set length of long sample path and start position for sample\;
+     Slice the long sample path from the transient time to the end\;
+     In the slice count the appearance of each state\;
+     Empirical stationary distribution\;
+  \caption{Metropolis-Hastings algorithm}
+  \end{algorithm}
+  
+\subsection*{Scripts}
+
+\input{montecarlo_scripts}
+
+\hr
+
+\visual{Problems to Work}{../../../../CommonInformation/Lessons/solveproblems.png}
+\section*{Problems to Work for Understanding}
+\renewcommand{\theexerciseseries}{}
+\renewcommand{\theexercise}{\arabic{exercise}}
+
+\begin{exercise}
+    Consider the following Markov Chain:  \( N \) black balls and \( N \)
+    white balls are placed in two urns so that each contains \( N \)
+    balls.  At each step one ball is selected at random from each urn
+    and the two balls interchange urns.  Let \( N = 3 \) and the state
+    of the system is the number of white balls in the first urn.
+    \begin{enumerate}[label=(\alph*)]
+    \item
+        What is the probability transition matrix \( P \)?
+    \item
+        What is the stationary distribution?
+    \item
+        What is the matrix \( \alpha \) of entries \( \alpha_{ij} \) in
+        the Metropolis-Hastings algorithm?
+    \item
+        Choose a satisfactory transition matrix and then create the
+        matrix \( Q \) in the Metropolis-Hastings algorithm.
+    \item
+        Find the eigenvalues of \( P \) and the approximate rate of
+        convergence to the stationary distribution.
+    \item
+        Find the eigenvalues of \( Q \) and the approximate rate of
+        convergence to the stationary distribution.
+\end{enumerate}
+\end{exercise}
+\begin{solution}
+    \begin{enumerate}[label=(\alph*)]
+    \item
+        For \( N = 3 \), the transition probability matrix is
+        \[
+            \begin{pmatrix}
+                0 & 1 & 0 & 0 \\
+                1/9 & 4/9 & 4/9 & 0 \\
+                0 & 4/9 & 4/9 & 1/9 \\
+                0 & 0 & 1 & 0
+            \end{pmatrix}
+            .
+        \]
+    \item
+        The stationary distribution is \( \pi = (1/20, 9/20, 9/20, 1/20)
+        \).
+    \item
+        For simplicity and without prior knowledge on the transitions
+        among the \( 4 \) states choose
+        \[
+            \begin{pmatrix}
+                1/4 & 1/4 & 1/4 & 1/4 \\
+                1/4 & 1/4 & 1/4 & 1/4 \\
+                1/4 & 1/4 & 1/4 & 1/4 \\
+                1/4 & 1/4 & 1/4 & 1/4 \\
+            \end{pmatrix}
+            .
+        \] Then the denominator of the \( \alpha_{ij} \) values is
+        \[
+            \alpha_{ij} = \frac{1}{1 + \frac{\pi_i}{\pi_j} \frac{p_ {ij}}
+            {p_{ji}}} = \frac{1}{1 + \frac{\pi_i}{\pi_j}}.
+        \] The matrix of \( \alpha_{ij} \) values is
+        \[
+            \begin{pmatrix}
+                \frac{1}{2} & \frac{9}{10} & \frac{9}{10} & \frac{1}{2}\\
+                \frac{1}{10} & \frac{1}{2} & \frac{1}{2} & \frac{1}{10}\\
+                \frac{1}{10} & \frac{1}{2} & \frac{1}{2} & \frac{1}{10}\\
+                \frac{1}{2} & \frac{9}{10} & \frac{9}{10} & \frac{1}{2}
+            \end{pmatrix}
+            .
+        \] Since all entries are between \( 0 \) and \( 1 \), choose \(
+        s_{ij} =1 \), and the matrix above is the desired \( Q \).  Then
+        the matrix for the Metropolis-Hastings algorithm is
+        \[
+            \begin{pmatrix}
+                \frac{17}{40} & \frac{9}{40} & \frac{9}{40} & \frac{1}{8}\\
+                \frac{1}{40} & \frac{33}{40} & \frac{1}{8} & \frac{1}{40}\\
+                \frac{1}{40} & \frac{1}{8} & \frac{33}{40} & \frac{1}{40}\\
+                \frac{1}{8} & \frac{9}{40} & \frac{9}{40} & \frac{17}{40}
+            \end{pmatrix}
+            .
+        \] This has the same stationary distribution.
+    \item
+        The eigenvalues of \( P \) are \( 1, 1/3, -1/3, -1/9 \).  The
+        rate of convergence to the stationary distribution is
+        approximately \( (1/3)^n \).
+    \item
+        The eigenvalues of \( Q \) are \( 1, 7/10, 1/2, 3/10 \).  The
+        rate of convergence to the stationary distribution is
+        approximately \( (7/10)^n \), much slower.
+\end{enumerate}
+\end{solution}
+\begin{exercise}
+    Consider the second Ehrenfest urn model with \( N=4 \), \( p = q =
+    \frac{1}{2} \) and transition probability matrix
+    \[
+        P =
+        \begin{pmatrix}
+            \frac{1}{2} & \frac{1}{2} & 0 & 0 & 0\\
+            \frac{1}{8} & \frac{1}{2} & \frac{3}{8} & 0 & 0\\
+            0 & \frac{1}{4} & \frac{1}{2} & \frac{1}{4} & 0\\
+            0 & 0 & \frac{3}{8} & \frac{1}{2} & \frac{1}{8}\\
+            0 & 0 & 0 & \frac{1}{2} & \frac{1}{2}
+        \end{pmatrix}
+        .
+    \]
+    \begin{enumerate}[label=(\alph*)]
+    \item
+        Show that this Markov chain is irreducible, positive recurrent,
+        aperiodic.
+    \item
+        Find the stationary distribution \( \pi \).
+    \item
+        Show the Markov chain is reversible.
+    \item
+        Find the eigenvalues and corresponding eigenvectors, ordered by
+        decreasing eigenvalue.
+    \item
+        Using the inner product weighted by \( \pi \), find the
+        normalized orthonormal eigenvector basis.
+    \item
+        Show that
+        \[
+            P(x,y) = \pi(y) \sum\limits_{i=1}^{5} \beta_i \psi_i(x) \psi_i
+            (y).
+        \]
+\end{enumerate}
+\end{exercise}
+\begin{solution}
+    \begin{enumerate}[label=(\alph*)]
+    \item
+        Since each state has a positive probability of transitioning to
+        its neighbor state, the chain is irreducible.  Alternatively,
+        each entry in \( P^4 \) is non-zero, so the chain is
+        irreducible.  Since this is a finite state space irreducible
+        chain, it is positive recurrent.  Since each state has a
+        positive probability of staying in the state, the minimum return
+        time is \( 1 \), so the chain is aperiodic.
+    \item
+        \[
+            \pi = \left( \frac{1}{16}, \frac{1}{4}, \frac{3}{8}, \frac{1}
+            {4}, \frac{1}{16} \right).
+        \]
+    \item
+        It is easy to check the reversibility, but both the physical
+        description, and the symmetry of \( \pi \) and \( P \) suggest
+        that reversibility holds.
+    \item
+        The eigenvalues, ordered by decreasing value, are \(
+        1,3/4,1/2,1/4,0 \).
+    \item
+        The corresponding eigenvectors, without normalization, are
+        \begin{multline*}
+            (1,1,1,1,1)^T,(1,1/2,0,-1/2,-1)^T,(1,0,-1/3,0,1)^T, \\
+            (1,-1/2,0,1/2,-1)^T, (1,-1,1,-1,1)^T.
+        \end{multline*}
+    \item
+        The weighted inner products of each eigenvector with itself is
+        respectively \( 1, 1/4, 1/6, 1/4, 1 \) so the normalized
+        eigenvectors are
+        \begin{multline*}
+            \left( 1,1,1,1,1\right)^T, \left( 2,1,0,-1,-2\right)^T,
+            \left( \sqrt{6},0,-\frac{\sqrt{6}}{3},0,\sqrt{6}\right)^T,
+            \\
+            \left( 2,-1,0,1,-2\right)^T, \left( 1,-1,1,-1,1\right)^T.
+        \end{multline*}
+    \item
+        With (for example) the Maxima command
+\begin{verbatim}
+      generateP: genmatrix(lambda([i,j], pi[j] *
+     sum(beta[k]*psi[k][i]*psi[k][j], k, 1, 5)[1]), 5, 5);
+\end{verbatim}
+        the result is
+        \[
+            P =
+            \begin{pmatrix}
+                \frac{1}{2} & \frac{1}{2} & 0 & 0 & 0\\
+                \frac{1}{8} & \frac{1}{2} & \frac{3}{8} & 0 & 0\\
+                0 & \frac{1}{4} & \frac{1}{2} & \frac{1}{4} & 0\\
+                0 & 0 & \frac{3}{8} & \frac{1}{2} & \frac{1}{8}\\
+                0 & 0 & 0 & \frac{1}{2} & \frac{1}{2}
+            \end{pmatrix}
+            .
+        \] as expected.
+\end{enumerate}
+\end{solution}
+\begin{exercise}
+    \begin{enumerate}[label=(\alph*)]
+    \item
+        Using the results from the previous problem, find the upper
+        bound~\eqref{eq:montecarlo:bound} for the square of the total
+        variation distance of the distribution starting from state \( 5 \),
+        with all balls in the first urn, from the stationary
+        distribution.
+    \item
+        With numerical computation, check the inequality for \( 5 \) and
+        \( 10 \) steps of the Markov chain.
+\end{enumerate}
+\end{exercise}
+\begin{solution}
+    \begin{enumerate}[label=(\alph*)]
+    \item
+        Using the normalized eigenvectors from the previous solution,
+        the upper bound is:
+        \begin{multline*}
+            \frac{1}{4} \sum\limits_{i=2}^{\card{\mathcal{X}}} \beta_i^{2n}
+            \psi_i(x)^2 \\
+            = \frac{1}{4} \left[ \left(\frac{3}{4} \right)^{2n} \cdot (-2)^
+            {2} + \left( \frac{1}{2} \right)^{2n} \cdot (\sqrt {6})^2 +
+            \left(\frac{1}{4} \right)^{2n} \cdot (-2)^{2} + (0)^ {2n} (-2)^
+            {2} \right] \\
+            = \left( \frac{3}{4} \right)^{2n} + \frac{3}{2} \cdot \left(
+            \frac{1}{2} \right)^{2n} + \left( \frac{1}{4} \right)^{2n}
+        \end{multline*}
+    \item
+        After 5 steps, the total variation distance squared is
+        approximately \( 0.0359 \) and the upper bound is approximately \(
+        0.0577 \) so the inequality bound holds.  After 10 steps, the
+        total variation distance squared is approximately \( 0.00181 \)
+        and the upper bound is approximately \( 0.00317 \) so the
+        inequality bound holds.
+\end{enumerate}
+
+\end{solution}
+\begin{exercise}
+    Suppose the Markov chain is reversible, so \( \pi(x) P(x,y) = \pi(y)
+    P(y,x) \).  Let the space be \( L^2(\pi) \), the set of mappings \(
+    \{g :  X \to \Reals \} \) with inner product \( (g,h) = \sum\limits_
+    {x}g(x) h(x) \pi(x) \).  Then \( P \) operates on \( L^2 \) by
+    multiplication \( Pg(x) = \sum\limits_y P(x,y) g(y) \).  Show that
+    the property of reversibility implies \( (Pg,h) = (g,Ph) \), so \( P
+    \) is self-adjoint.
+\end{exercise}
+\begin{solution}
+    \begin{align*}
+        \langle Pg, h \rangle &= \sum_x \sum_y P(x,y)g(y) h(x) \pi(x) \\
+        &= \sum_x \sum_y g(y) h(x) \pi(x) P(x,y) \\
+        &= \sum_x \sum_y g(y) h(x) \pi(y) P(y,x) \\
+        &= \sum_x \sum_y g(y) P(y,x)h(x) \pi(y) \\
+        &= \sum_y \sum_x g(y) P(y,x)h(x) \pi(y) \\
+        &= \sum_y g(y) \sum_x P(y,x)h(x) \pi(y) \\
+        &= \langle g, Ph \rangle.
+    \end{align*}
+\end{solution}
+\begin{exercise}
+    For self-adjoint matrix \( P \) and stationary distribution \( \pi \),
+    with an orthonormal basis (with respect to the inner product \( (g,h)
+    = \sum\limits_{x}g(x) h(x) \pi(x) \)) with right eigenvectors \(
+    \psi_i \) and real eigenvalues \( \beta_i \), so \( P\psi_i = \beta_i
+    \psi_i \) for \( 1 \le i \le \card{\mathcal{X}} \) ordered by \( 1 =
+    \beta_1 \ge \beta_2 \ge \cdots \ge \beta_{\card{\mathcal{X}}} \ge -1
+    \), show that
+    \[
+        P(x,y) = \pi(y) \sum\limits_{i=1}^{\card{\mathcal{X}}} \beta_i
+        \psi_i(x) \psi_i(y).
+    \]
+\end{exercise}
+\begin{solution}
+    Let \( \vec{e}_x \) be the elementary column vector with \( 1 \) at
+    position \( x \) and \( 0 \) elsewhere.  Since \( \vec{e}_x \) is a
+    probability distribution concentrated entirely on state \( x \),
+    then \( \vec{e}^T_x \cdot P \) is the probability distribution of
+    states after one step from \( x \).  Then \( \vec{e}^T_x \cdot P
+    \cdot \vec{e}_y \) picks out \( P(x,y) \), that is, \( \vec{e}^T_x
+    \cdot P \cdot \vec{e}_y = P(x,y) \).  The point is that this
+    probability product does not involve the inner product weight vector
+    \( \pi \).
+
+    The orthonormal eigenvector basis represents \( \vec{e}_x \) in
+    terms of \( \vec{\psi}_i \) as \( \vec{e}_x = \sum_i a_{xi} \vec{\psi}_i
+    \) for some scalars \( a_{xi} \).  Projecting \( \vec{e}_x \)
+    against \( \vec{\psi}_i \) with the weighted inner product
+    \[
+        a_{xi} = \langle \vec{e}_{x}, \vec{\psi}_{i} \rangle = \psi_i(x)
+        \pi(x)
+    \] so as a column vector
+    \[
+        \vec{e}_x =\sum\limits_i \psi_i(x) \pi(x) \vec{\psi}_i.
+    \]
+
+    Using
+    \[
+        P(x,y) = \vec{e}^T_x \cdot P \cdot \vec{e}_y
+    \] where \( \vec{e}^T_x \cdot P \cdot \vec{e}_y \) indicates the
+    usual matrix-vector product with rows dotted against columns, and
+    expressing \( \vec{e}_y \), but not \( \vec{e}_x \), in terms of the
+    orthonormal basis
+    \begin{align*}
+        & = \vec{e}_x \cdot P \cdot \left( \sum\limits_i \psi_i(y) \pi(y)
+        \vec{\psi}_i \right) \\
+        & = \vec{e}_x \cdot \left( \sum\limits_i \psi_i(y) \pi(y) P
+        \cdot \vec{\psi}_i \right) \\
+        &= \vec{e}_x \cdot \left( \sum\limits_i \psi_i(y) \pi(y) \beta_i
+        \vec{\psi}_i \right) \\
+    \end{align*}
+    using the eigenvector property.  Now factoring the dot product with \(
+    \vec{e}_x \) through the sum will pick out the \( x \)th term from
+    each \( \vec{\psi}_i \),
+    \begin{align*}
+        &= \sum\limits_i \psi_i(y) \pi(y) \beta_i \left( \vec{e}_x \cdot
+        \vec{\psi}_i \right) \\
+        & = \sum\limits_i \psi_i(y) \pi(y) \beta_i \psi_i(x)
+    \end{align*}
+    and finally, \( \pi(y) \) is independent of the summation over \( i \)
+    so it can be factored out of the sum, and rearranging the products
+    yields
+    \[
+        = \pi(y) \sum\limits_i \beta_i \psi_i(x) \psi_i(y).
+    \]
+\end{solution}
+
+\visual{Books}{../../../../CommonInformation/Lessons/books.png}
+\section*{Reading Suggestion:}
+
+\bibliography{../../../../CommonInformation/bibliography}
+
+%   \begin{enumerate}
+%     \item
+%     \item
+%     \item
+%   \end{enumerate}
+
+\hr
+
+\visual{Links}{../../../../CommonInformation/Lessons/chainlink.png}
+\section*{Outside Readings and Links:}
+\begin{enumerate}
+    \item
+    \item
+    \item
+    \item
+\end{enumerate}
+
+\section*{\solutionsname} \loadSolutions
+
+\hr
+
+\mydisclaim \myfooter
+
+Last modified:  \flastmod
+
+\end{document}
+
+
+%%% Local Variables:
+%%% TeX-master: t
+%%% TeX-master: t
+%%% End:
